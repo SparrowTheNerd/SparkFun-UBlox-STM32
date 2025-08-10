@@ -52,9 +52,10 @@
 
 #pragma once
 
-#include <Arduino.h>
-#include <Wire.h>
-#include <SPI.h>
+#include "stm32h7xx_hal.h"
+#include "i2c.h"
+#include "spi.h"
+#include "abstract.h"
 
 namespace SparkFun_UBLOX_GNSS
 {
@@ -90,16 +91,13 @@ namespace SparkFun_UBLOX_GNSS
     virtual uint8_t readBytes(uint8_t *data, uint8_t length) = 0;
   };
 
-  // The SfeI2C device defines behavior for I2C implementation based around the TwoWire class (Wire).
-  // This is Arduino specific.
+  // The SfeI2C device defines behavior for I2C implementation
   class SfeI2C : public GNSSDeviceBus
   {
   public:
     SfeI2C(void);
 
-    bool init(uint8_t address);
-
-    bool init(TwoWire &wirePort, uint8_t address, bool bInit = false);
+    bool init(I2C_HandleTypeDef &i2cHandle, uint8_t address);
 
     bool ping();
 
@@ -118,139 +116,63 @@ namespace SparkFun_UBLOX_GNSS
     uint8_t readBytes(uint8_t *data, uint8_t length);
 
   private:
-    TwoWire *_i2cPort;
+    I2C_HandleTypeDef *_i2cPort;
     uint8_t _address;
   };
 
-  // The SfeSPI class defines behavior for SPI implementation based around the SPIClass class (SPI).
-  // This is Arduino specific.
-  // Note that writeBytes also reads bytes (into data)
-  class SfeSPI : public GNSSDeviceBus
-  {
-  public:
-    SfeSPI(void);
+  // class SfePrint
+  // {
+  // public:
+  //   SfePrint(void) { _outputPort = nullptr; }
 
-    bool init(uint8_t cs);
-
-    bool init(SPIClass &spiPort, SPISettings &spiSettings, uint8_t cs, bool bInit = false);
-
-    bool init(SPIClass &spiPort, uint32_t spiSpeed, uint8_t cs, bool bInit = false);
-
-    bool ping() { return false; }
-
-    uint16_t available();
-
-    uint8_t writeBytes(uint8_t *data, uint8_t length);
-
-    uint8_t writeReadBytes(const uint8_t *data, uint8_t *readData, uint8_t length);
-
-    void startWriteReadByte();
-    void writeReadByte(const uint8_t *data, uint8_t *readData);
-    void writeReadByte(const uint8_t data, uint8_t *readData);
-    void endWriteReadByte();
-
-    uint8_t readBytes(uint8_t *data, uint8_t length);
-
-  private:
-    SPIClass *_spiPort;
-    // Settings are used for every transaction.
-    SPISettings _sfeSPISettings;
-    uint8_t _cs;
-  };
-
-  // The sfeSerial device defines behavior for Serial (UART) implementation based around the Stream class.
-  // This is Arduino specific.
-  class SfeSerial : public GNSSDeviceBus
-  {
-  public:
-    SfeSerial(void);
-
-    bool init(Stream &serialPort);
-
-    bool ping() { return false; }
-
-    uint16_t available();
-
-    uint8_t writeBytes(uint8_t *data, uint8_t length);
-
-    uint8_t writeReadBytes(const uint8_t *data, uint8_t *readData, uint8_t length)
-    { (void)data; (void)readData; (void)length; return 0; }
-
-    void startWriteReadByte(){};
-    void writeReadByte(const uint8_t *data, uint8_t *readData){ (void)data; (void)readData; }
-    void writeReadByte(const uint8_t data, uint8_t *readData){ (void)data; (void)readData; }
-    void endWriteReadByte(){};
-
-    uint8_t readBytes(uint8_t *data, uint8_t length);
-
-  private:
-    Stream *_serialPort;
-  };
-
-  // The sfePrint device defines behavior for Serial diagnostic prints based around the Stream class.
-  // This is Arduino specific.
-  class SfePrint
-  {
-  public:
-    SfePrint(void) { _outputPort = nullptr; }
-
-    void init(Print &outputPort) { _outputPort = &outputPort; }
-    inline bool operator==(SfePrint const &other) const { return _outputPort == other._outputPort; }
-    inline bool operator!=(SfePrint const &other) const { return !(*this == other); }
+  //   void init(Print &outputPort) { _outputPort = &outputPort; }
+  //   inline bool operator==(SfePrint const &other) const { return _outputPort == other._outputPort; }
+  //   inline bool operator!=(SfePrint const &other) const { return !(*this == other); }
     
-    void write(uint8_t c)
-    {
-      if (_outputPort != nullptr)
-        _outputPort->write(c);
-    }
-    void print(const char *c)
-    {
-      if (_outputPort != nullptr)
-        _outputPort->print(c);
-    }
-    void print(const __FlashStringHelper *c)
-    {
-      if (_outputPort != nullptr)
-        _outputPort->print(c);
-    }
-    void print(unsigned int c, int f)
-    {
-      if (_outputPort != nullptr)
-        _outputPort->print(c, f);
-    }
-    void print(uint16_t c)
-    {
-      if (_outputPort != nullptr)
-        _outputPort->print(c);
-    }
-    void println()
-    {
-      if (_outputPort != nullptr)
-        _outputPort->println();
-    }
-    void println(const char *c)
-    {
-      if (_outputPort != nullptr)
-        _outputPort->println(c);
-    }
-    void println(const __FlashStringHelper *c)
-    {
-      if (_outputPort != nullptr)
-        _outputPort->println(c);
-    }
-    void println(size_t c)
-    {
-      if (_outputPort != nullptr)
-        _outputPort->println(c);
-    }
-    void println(uint8_t c, int f)
-    {
-      if (_outputPort != nullptr)
-        _outputPort->println(c, f);
-    }
+  //   void write(uint8_t c)
+  //   {
+  //     if (_outputPort != nullptr)
+  //       _outputPort->write(c);
+  //   }
+  //   void print(const char *c)
+  //   {
+  //     if (_outputPort != nullptr)
+  //       _outputPort->print(c);
+  //   }
+
+  //   void print(unsigned int c, int f)
+  //   {
+  //     if (_outputPort != nullptr)
+  //       _outputPort->print(c, f);
+  //   }
+  //   void print(uint16_t c)
+  //   {
+  //     if (_outputPort != nullptr)
+  //       _outputPort->print(c);
+  //   }
+  //   void println()
+  //   {
+  //     if (_outputPort != nullptr)
+  //       _outputPort->println();
+  //   }
+  //   void println(const char *c)
+  //   {
+  //     if (_outputPort != nullptr)
+  //       _outputPort->println(c);
+  //   }
+  //   void println(size_t c)
+  //   {
+  //     if (_outputPort != nullptr)
+  //       _outputPort->println(c);
+  //   }
+  //   void println(uint8_t c, int f)
+  //   {
+  //     if (_outputPort != nullptr)
+  //       _outputPort->println(c, f);
+  //   }
   
-  private: 
-    Print *_outputPort;
-  };
+  // private: 
+  //   Print *_outputPort;
+  // };
 
 };

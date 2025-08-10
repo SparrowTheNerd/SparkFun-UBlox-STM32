@@ -83,12 +83,12 @@
 #define SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
 #endif
 
-#include <Arduino.h>
 #include "u-blox_config_keys.h"
 #include "u-blox_structs.h"
 #include "u-blox_external_typedefs.h"
 #include "u-blox_Class_and_ID.h"
 #include "sfe_bus.h"
+#include <stdio.h>
 
 // Define a digital pin to aid debugging
 // Leave set to -1 if not needed
@@ -102,6 +102,10 @@ public:
 
   // New in v3.0: hardware interface is abstracted
   bool isConnected(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+
+  uint8_t usbTxBuf[256]; // USB Tx buffer
+  uint16_t usbTxBufLen;
+
 
 protected:
   enum commTypes
@@ -198,23 +202,7 @@ public:
 // Boards like the RedBoard Turbo use SerialUSB (not Serial).
 // But other boards like the SAMD51 Thing Plus use Serial (not SerialUSB).
 // These lines let the code compile cleanly on as many SAMD boards as possible.
-#if defined(ARDUINO_ARCH_SAMD)                                                        // Is this a SAMD board?
-#if defined(USB_VID)                                                                  // Is the USB Vendor ID defined?
-#if (USB_VID == 0x1B4F)                                                               // Is this a SparkFun board?
-#if !defined(ARDUINO_SAMD51_THING_PLUS) & !defined(ARDUINO_SAMD51_MICROMOD)           // If it is not a SAMD51 Thing Plus or SAMD51 MicroMod
-  void enableDebugging(Print &debugPort = SerialUSB, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
-#else
-  void enableDebugging(Print &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
-#endif
-#else
-  void enableDebugging(Print &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
-#endif
-#else
-  void enableDebugging(Print &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
-#endif
-#else
-  void enableDebugging(Print &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
-#endif
+  void enableDebugging(); // Given a port to print to, enable debug messages. Default to all, not limited.
 
   void disableDebugging(void);                       // Turn off debug statements
   void debugPrint(char *message);                    // Safely print debug statements
@@ -288,11 +276,8 @@ public:
 // allowing the user to override with their own time data with setUTCTimeAssistance.
 // offset allows a sub-set of the data to be sent - starting from offset.
 #define defaultMGAdelay 7 // Default to waiting for 7ms between each MGA message
-  size_t pushAssistNowData(const String &dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck = SFE_UBLOX_MGA_ASSIST_ACK_NO, uint16_t maxWait = defaultMGAdelay);
   size_t pushAssistNowData(const uint8_t *dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck = SFE_UBLOX_MGA_ASSIST_ACK_NO, uint16_t maxWait = defaultMGAdelay);
-  size_t pushAssistNowData(bool skipTime, const String &dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck = SFE_UBLOX_MGA_ASSIST_ACK_NO, uint16_t maxWait = defaultMGAdelay);
   size_t pushAssistNowData(bool skipTime, const uint8_t *dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck = SFE_UBLOX_MGA_ASSIST_ACK_NO, uint16_t maxWait = defaultMGAdelay);
-  size_t pushAssistNowData(size_t offset, bool skipTime, const String &dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck = SFE_UBLOX_MGA_ASSIST_ACK_NO, uint16_t maxWait = defaultMGAdelay);
   size_t pushAssistNowData(size_t offset, bool skipTime, const uint8_t *dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck = SFE_UBLOX_MGA_ASSIST_ACK_NO, uint16_t maxWait = defaultMGAdelay);
 
 // Provide initial time assistance
@@ -314,7 +299,6 @@ public:
   // The daysIntoFture parameter makes it easy to get the data for (e.g.) tomorrow based on today's date
   // Returns numDataBytes if unsuccessful
   // TO DO: enhance this so it will find the nearest data for the chosen day - instead of an exact match
-  size_t findMGAANOForDate(const String &dataBytes, size_t numDataBytes, uint16_t year, uint8_t month, uint8_t day, uint8_t daysIntoFuture = 0);
   size_t findMGAANOForDate(const uint8_t *dataBytes, size_t numDataBytes, uint16_t year, uint8_t month, uint8_t day, uint8_t daysIntoFuture = 0);
 
 // Read the whole navigation data base. The receiver will send all available data from its internal database.
@@ -352,11 +336,6 @@ public:
   bool setUART2Input(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART2 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
   bool setUSBInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
   bool setSPIInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
-
-  void setNMEAOutputPort(Print &outputPort); // Sets the internal variable for the port to direct only NMEA characters to
-  void setRTCMOutputPort(Print &outputPort); // Sets the internal variable for the port to direct only RTCM characters to
-  void setUBXOutputPort(Print &outputPort);  // Sets the internal variable for the port to direct only UBX characters to
-  void setOutputPort(Print &outputPort);     // Sets the internal variable for the port to direct ALL characters to
 
   // Reset to defaults
 
@@ -1569,11 +1548,11 @@ protected:
   // Variables
   SparkFun_UBLOX_GNSS::GNSSDeviceBus *_sfeBus;
 
-  SparkFun_UBLOX_GNSS::SfePrint _nmeaOutputPort; // The user can assign an output port to print NMEA sentences if they wish
-  SparkFun_UBLOX_GNSS::SfePrint _rtcmOutputPort; // The user can assign an output port to print RTCM sentences if they wish
-  SparkFun_UBLOX_GNSS::SfePrint _ubxOutputPort;  // The user can assign an output port to print UBX sentences if they wish
-  SparkFun_UBLOX_GNSS::SfePrint _outputPort;     // The user can assign an output port to print ALL characters to if they wish
-  SparkFun_UBLOX_GNSS::SfePrint _debugSerial;    // The stream to send debug messages to if enabled
+  // SparkFun_UBLOX_GNSS::SfePrint _nmeaOutputPort; // The user can assign an output port to print NMEA sentences if they wish
+  // SparkFun_UBLOX_GNSS::SfePrint _rtcmOutputPort; // The user can assign an output port to print RTCM sentences if they wish
+  // SparkFun_UBLOX_GNSS::SfePrint _ubxOutputPort;  // The user can assign an output port to print UBX sentences if they wish
+  // SparkFun_UBLOX_GNSS::SfePrint _outputPort;     // The user can assign an output port to print ALL characters to if they wish
+  // SparkFun_UBLOX_GNSS::SfePrint _debugSerial;    // The stream to send debug messages to if enabled
   bool _printDebug = false;                      // Flag to print the serial commands we are sending to the Serial port for debug
   bool _printLimitedDebug = false;               // Flag to print limited debug messages. Useful for I2C debugging or high navigation rates
 
