@@ -89,6 +89,7 @@
 #include "u-blox_Class_and_ID.h"
 #include "sfe_bus.h"
 #include <stdio.h>
+#include "stm32h7xx_hal.h"
 
 // Define a digital pin to aid debugging
 // Leave set to -1 if not needed

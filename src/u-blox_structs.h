@@ -50,6 +50,8 @@
 
 #pragma once
 
+#include "stm32h7xx_hal.h"
+
 #ifndef DEF_NUM_SENS
 #define DEF_NUM_SENS 7 // The maximum number of ESF sensors
 #endif

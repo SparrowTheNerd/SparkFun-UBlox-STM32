@@ -84,7 +84,7 @@ public:
   // This methond is overridden, implementing two versions.
   
   //  User passes in an I2C object and an address (optional).
-  bool begin(I2C_HandleTypeDef &wirePort, uint8_t deviceAddress = kUBLOXGNSSDefaultAddress, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait, bool assumeSuccess = false)
+  bool begin(I2C_HandleTypeDef &wirePort, uint8_t deviceAddress = kUBLOXGNSSDefaultAddress<<1, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait, bool assumeSuccess = false)
   {
     // Setup  I2C object and pass into the superclass
     setCommunicationBus(_i2cBus);

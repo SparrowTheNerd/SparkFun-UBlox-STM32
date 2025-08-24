@@ -50,6 +50,9 @@
 
 #pragma once
 
+#include "stm32h7xx_hal.h"
+
+
 // Define the maximum length of a multi-CfgValset construct
 // "This message is limited to containing a maximum of 64 key-value pairs"
 const uint8_t CFG_VALSET_MAX_KEYS = 64;

@@ -52,6 +52,8 @@
 
 #pragma once
 
+#include "stm32h7xx_hal.h"
+
 const uint8_t UBX_SYNCH_1 = 0xB5;
 const uint8_t UBX_SYNCH_2 = 0x62;
 

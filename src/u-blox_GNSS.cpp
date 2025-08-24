@@ -7484,8 +7484,8 @@ bool DevUBLOXGNSS::createFileBuffer(void)
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
   if (_printDebug == true)
   {
-    SerialPrint((uint8_t*)"createFileBuffer: fileBufferSize is: ");
-    SerialPrintln((uint8_t*)fileBufferSize);
+    sprintf((char*)usbTxBuf, "createFileBuffer: fileBufferMaxAvail is: %d", fileBufferMaxAvail);
+    SerialPrintln(usbTxBuf);
   }
 #endif
 

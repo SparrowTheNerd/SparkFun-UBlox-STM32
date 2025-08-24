@@ -50,6 +50,8 @@
 
 #pragma once
 
+#include "stm32h7xx_hal.h"
+
 #define kUBLOXGNSSDefaultAddress 0x42 // Default 7-bit unshifted address of the ublox 6/7/8/M8/F9 series
 
 // A default of 250ms for maxWait seems fine for I2C but is not enough for SerialUSB.
