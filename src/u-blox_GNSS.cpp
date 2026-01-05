@@ -3570,7 +3570,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         packetUBXNAVPVT->data.sec = extractByte(msg, 10);
         packetUBXNAVPVT->data.valid.all = extractByte(msg, 11);
         packetUBXNAVPVT->data.tAcc = extractLong(msg, 12);
-        packetUBXNAVPVT->data.nano = extractSignedLong(msg, 16); // Includes HAL_GetTickeconds
+        packetUBXNAVPVT->data.nano = extractSignedLong(msg, 16); // Includes milliseconds
         packetUBXNAVPVT->data.fixType = extractByte(msg, 20);
         packetUBXNAVPVT->data.flags.all = extractByte(msg, 21);
         packetUBXNAVPVT->data.flags2.all = extractByte(msg, 22);
@@ -3790,7 +3790,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         packetUBXNAVPVAT->data.min = extractByte(msg, 11);
         packetUBXNAVPVAT->data.sec = extractByte(msg, 12);
         packetUBXNAVPVAT->data.tAcc = extractLong(msg, 16);
-        packetUBXNAVPVAT->data.nano = extractSignedLong(msg, 20); // Includes HAL_GetTickeconds
+        packetUBXNAVPVAT->data.nano = extractSignedLong(msg, 20); // Includes milliseconds
         packetUBXNAVPVAT->data.fixType = extractByte(msg, 24);
         packetUBXNAVPVAT->data.flags.all = extractByte(msg, 25);
         packetUBXNAVPVAT->data.flags2.all = extractByte(msg, 26);
@@ -7145,7 +7145,7 @@ size_t DevUBLOXGNSS::findMGAANOForDateInternal(const uint8_t *dataBytes, size_t 
 // If the database exceeds maxNumDataBytes, the excess bytes will be lost.
 // The function returns the number of database bytes written to dataBytes.
 // The return value will be equal to maxNumDataBytes if excess data was received.
-// The function will timeout after maxWait HAL_GetTickeconds - in case the final UBX-MGA-ACK was missed.
+// The function will timeout after maxWait milliseconds - in case the final UBX-MGA-ACK was missed.
 size_t DevUBLOXGNSS::readNavigationDatabase(uint8_t *dataBytes, size_t maxNumDataBytes, uint16_t maxWait)
 {
   // Allocate RAM to store the MGA ACK message
@@ -17697,7 +17697,7 @@ uint8_t DevUBLOXGNSS::getNavigationFrequency(uint8_t layer, uint16_t maxWait) //
   return navFreq;
 }
 
-// Set the elapsed time between GNSS measurements in HAL_GetTickeconds, which defines the rate
+// Set the elapsed time between GNSS measurements in milliseconds, which defines the rate
 bool DevUBLOXGNSS::setMeasurementRate(uint16_t rate, uint8_t layer, uint16_t maxWait)
 {
   if (rate < 25) // "Measurement rate should be greater than or equal to 25 ms."
@@ -17713,7 +17713,7 @@ bool DevUBLOXGNSS::setMeasurementRate(uint16_t rate, uint8_t layer, uint16_t max
   return setVal16(UBLOX_CFG_RATE_MEAS, rate, layer, maxWait);
 }
 
-// Return the elapsed time between GNSS measurements in HAL_GetTickeconds, which defines the rate
+// Return the elapsed time between GNSS measurements in milliseconds, which defines the rate
 bool DevUBLOXGNSS::getMeasurementRate(uint16_t *measRate, uint8_t layer, uint16_t maxWait)
 {
   uint16_t measurementRate;
@@ -18026,7 +18026,7 @@ uint16_t DevUBLOXGNSS::getMillisecond(uint16_t maxWait)
   return (packetUBXNAVPVT->data.iTOW % 1000);
 }
 
-// Get the current nanoseconds - includes HAL_GetTickeconds
+// Get the current nanoseconds - includes milliseconds
 int32_t DevUBLOXGNSS::getNanosecond(uint16_t maxWait)
 {
   if (packetUBXNAVPVT == nullptr)
@@ -19190,11 +19190,11 @@ uint32_t DevUBLOXGNSS::getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait)
   tow += SFE_UBLOX_EPOCH_WEEK_2086;                                       // Add the TOW for Jan 1st 2020
   tow += packetUBXTIMTP->data.towMS / 1000;                               // Add the TOW for the next TP
 
-  uint32_t us = packetUBXTIMTP->data.towMS % 1000; // Extract the HAL_GetTickeconds
+  uint32_t us = packetUBXTIMTP->data.towMS % 1000; // Extract the milliseconds
   us *= 1000;                                      // Convert to microseconds
 
   double subMS = packetUBXTIMTP->data.towSubMS;         // Get towSubMS (ms * 2^-32)
-  subMS *= 2.3283064365386963e-10; // pow(2.0, -32.0);  // Convert to HAL_GetTickeconds
+  subMS *= 2.3283064365386963e-10; // pow(2.0, -32.0);  // Convert to milliseconds
   subMS *= 1000;                                        // Convert to microseconds
 
   us += (uint32_t)subMS; // Add subMS
